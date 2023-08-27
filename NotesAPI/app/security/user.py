@@ -11,11 +11,13 @@ from .password import verify
 from .token import decode_token
 
 
+# token acquisition endpoint declaration
+# corresponds to /token endpoint within /account router
 oauth2_schema = oauth2.OAuth2PasswordBearer(tokenUrl='/account/token')
 
 
-def authenticate_user(db_session: Session, email: str, password: str) -> User | None:
-    user = crud.get_by_email(db_session, email)
+def authenticate_user(db_session: Session, name: str, password: str) -> User | None:
+    user = crud.get_by_name(db_session, name)
     if not user:
         return None
     if not verify(password, user.password):

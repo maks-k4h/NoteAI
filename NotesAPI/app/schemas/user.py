@@ -2,12 +2,13 @@ from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
-    email: str
+    name: str
 
 
 class UserRegister(UserBase):
-    name: str
+    email: str
     password: str
+
 
 class UserLogin(UserBase):
     password: str

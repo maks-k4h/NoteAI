@@ -22,13 +22,13 @@ def get_by_uuid(session: orm.Session, uuid: UUID):
     return session.get(models.User, uuid)
 
 
-def get_by_email(session: orm.Session, email: str):
-    return session.scalar(sa.select(models.User).filter(models.User.email == email))
-
-
-def check_email(session: orm.Session, email: str) -> bool:
-    return session.query(session.query(models.User).filter(models.User.email == email).exists()).scalar()
+def get_by_name(session: orm.Session, name: str):
+    return session.scalar(sa.select(models.User).filter(models.User.name == name))
 
 
 def check_name(session: orm.Session, name: str) -> bool:
-    return session.query(session.query(models.UserMeta).filter(models.UserMeta.name == name).exists()).scalar()
+    return session.query(session.query(models.User).filter(models.User.name == name).exists()).scalar()
+
+
+def check_email(session: orm.Session, email: str) -> bool:
+    return session.query(session.query(models.UserMeta).filter(models.UserMeta.email == email).exists()).scalar()

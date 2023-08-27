@@ -22,7 +22,7 @@ class User(Base):
     __tablename__ = 'users'
 
     uuid = mapped_column(sa.Uuid, primary_key=True)
-    email: Mapped[str] = mapped_column(sa.String(321), nullable=False)
+    name: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     password: Mapped[str] = mapped_column(sa.String(64), nullable=False)
 
     user_meta: Mapped[UserMeta] = relationship(back_populates='user')
@@ -48,7 +48,7 @@ class UserMeta(Base):
     __tablename__ = 'users_meta'
 
     user_uuid = mapped_column(sa.ForeignKey('users.uuid'), primary_key=True)
-    name: Mapped[str] = mapped_column(sa.String(64), nullable=False)
+    email: Mapped[str] = mapped_column(sa.String(321), nullable=False)
 
     user: Mapped[User] = relationship(back_populates='user_meta')
 

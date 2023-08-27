@@ -37,11 +37,11 @@ def register_user(session: Annotated[Session, Depends(get_db_session)], user: us
     # add new user
     db_user = models.User()
     db_user.uuid = uuid.uuid4()
-    db_user.email = user.email
+    db_user.name = user.name
     db_user.password = security_password.get_hash(user.password)
 
     db_usermeta = models.UserMeta()
-    db_usermeta.name = user.name
+    db_usermeta.email = user.email
 
     db_user.user_meta = db_usermeta
 
@@ -57,7 +57,7 @@ def get_token(session: Annotated[Session, Depends(get_db_session)],
 
     user = security_user.authenticate_user(session, form_data.username, form_data.password)
     if not user:
-        return HTTPException(status.HTTP_401_UNAUTHORIZED, 'Wrong credentials')
+        return HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     token_data = security_token.TokenData(uuid=str(user.uuid))
     token = security_token.create_token(token_data.dict(), datetime.timedelta(minutes=30))

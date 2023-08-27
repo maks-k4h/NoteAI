@@ -1,9 +1,17 @@
 from fastapi import FastAPI
 from fastapi import Response, status
+from . import DEBUG
+
+# include routers
+from .routers import account
+
 
 app = FastAPI(
-    debug=True
+    debug=DEBUG,
 )
+
+
+app.include_router(account.router)
 
 
 @app.get("/")

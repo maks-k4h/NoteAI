@@ -22,8 +22,8 @@ def upgrade() -> None:
     op.create_table(
         'users',
         sa.Column('uuid', sa.Uuid, primary_key=True),
-        sa.Column('email', sa.String(321)),     # assuming max len of 320
-        sa.Column('password', sa.String(64))      # assuming hash len of 60
+        sa.Column('email', sa.String(321), nullable=False),     # assuming max len of 320
+        sa.Column('password', sa.String(64), nullable=False)      # assuming hash len of 60
     )
 
 

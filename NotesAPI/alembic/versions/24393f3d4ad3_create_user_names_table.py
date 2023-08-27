@@ -21,7 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # keeping users' names in separate relation to maintain 3NF
     op.create_table(
-        'user_names',
+        'users_meta',
         sa.Column('user_uuid', sa.Uuid, primary_key=True),
         sa.Column('name', sa.String(64), nullable=False),
         sa.ForeignKeyConstraint(['user_uuid'], ['users.uuid'])

@@ -4,6 +4,7 @@ from . import DEBUG
 
 # include routers
 from .routers import account
+from .routers import notes
 
 
 app = FastAPI(
@@ -12,6 +13,7 @@ app = FastAPI(
 
 
 app.include_router(account.router)
+app.include_router(notes.router)
 
 
 @app.get("/")

@@ -25,12 +25,16 @@ def authenticate_user(db_session: Session, name: str, password: str) -> User | N
     return user
 
 
-def get_current_user(session: Annotated[Session, Depends(get_db_session)], token: Annotated[str, Depends(oauth2_schema)]) -> User:
+def get_current_user_uuid(token: Annotated[str, Depends(oauth2_schema)]) -> str:
+    payload = decode_token(token)
+    return payload.uuid
+
+
+def get_current_user(
+        session: Annotated[Session, Depends(get_db_session)],
+        user_uuid: Annotated[str, Depends(get_current_user_uuid)]) -> User:
     try:
-        print(token)
-        payload = decode_token(token)
-        uuid_str = payload.uuid
-        return crud.get_by_uuid(session, uuid.UUID(uuid_str))
+        return crud.get_by_uuid(session, uuid.UUID(user_uuid))
     except:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,

@@ -30,9 +30,9 @@ def get_account_info(user: Annotated[models.User, Depends(security_user.get_curr
 @router.post('/register')
 def register_user(session: Annotated[Session, Depends(get_db_session)], user: user_models.UserRegister):
     if user_crud.check_email(session, user.email):
-        return HTTPException(status.HTTP_400_BAD_REQUEST, 'This email is already used.')
+        return Response('This email is already used.', status_code=status.HTTP_400_BAD_REQUEST)
     if user_crud.check_name(session, user.name):
-        return HTTPException(status.HTTP_400_BAD_REQUEST, 'This name is already used.')
+        return Response('This name is already used.', status_code=status.HTTP_400_BAD_REQUEST)
 
     # add new user
     db_user = models.User()
@@ -46,7 +46,7 @@ def register_user(session: Annotated[Session, Depends(get_db_session)], user: us
     db_user.user_meta = db_usermeta
 
     if not user_crud.put_user(session, db_user):
-        return HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(status_code=status.HTTP_200_OK)
 
@@ -57,7 +57,7 @@ def get_token(session: Annotated[Session, Depends(get_db_session)],
 
     user = security_user.authenticate_user(session, form_data.username, form_data.password)
     if not user:
-        return HTTPException(status.HTTP_401_UNAUTHORIZED)
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 
     token_data = security_token.TokenData(uuid=str(user.uuid))
     token = security_token.create_token(token_data.dict(), datetime.timedelta(minutes=30))

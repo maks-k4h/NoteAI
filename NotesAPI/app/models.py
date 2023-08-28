@@ -27,6 +27,7 @@ class User(Base):
 
     user_meta: Mapped[UserMeta] = relationship(back_populates='user')
     categories: Mapped[list[Category]] = relationship(secondary=users_to_categories_association_table, back_populates='users')
+    notes: Mapped[list[Note]] = relationship(back_populates='user')
 
     def __repr__(self) -> str:
         return f'User(uuid={self.uuid}, email={self.email}, password={self.password})'
@@ -54,4 +55,21 @@ class UserMeta(Base):
 
     def __repr__(self) -> str:
         return f'UserMeta(user_uuid={self.user_uuid}, email={self.name})'
+
+
+class Note(Base):
+    __tablename__ = 'notes'
+
+    uuid = mapped_column(sa.Uuid, primary_key=True)
+    user_uuid = mapped_column(sa.ForeignKey('users.uuid'), nullable=False)
+    title: Mapped[str] = mapped_column(sa.String(256), nullable=True)
+    content: Mapped[str] = mapped_column(sa.Text, nullable=False)
+
+    user: Mapped[User] = relationship(back_populates='notes')
+
+    def __repr__(self):
+        return (f'Note(uuid={self.uuid.__str__()}, '
+                f'user_uuid={self.user_uuid.__str__()}, '
+                f'title="{self.title}, '
+                f'content={self.content[:30] + "..." if len(self.content) > 30 else self.content}")')
 

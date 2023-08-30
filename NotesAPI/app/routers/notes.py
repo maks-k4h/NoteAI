@@ -48,7 +48,7 @@ def create_note(db_session: Annotated[Session, Depends(get_db_session)],
     db_note.content = note.content
 
     if not notes_crud.put_note(db_session, db_note):
-        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(status_code=status.HTTP_200_OK)
 
@@ -63,15 +63,15 @@ def delete_note(db_session: Annotated[Session, Depends(get_db_session)],
     try:
         note_uuid = uuid.UUID(note_uuid)
     except:
-        return Response('Invalid UUID', status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
 
     note = notes_crud.get_by_uuid(db_session, note_uuid)
 
     if not note or not note.user_uuid.__str__() == user_uuid:
-        return Response('Note not found', status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Note not found')
 
     if not notes_crud.delete(db_session, note):
-        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(status_code=status.HTTP_200_OK)
 

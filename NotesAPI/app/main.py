@@ -3,8 +3,7 @@ from fastapi import Response, status
 from . import DEBUG
 
 # include routers
-from .routers import account
-from .routers import notes
+from .routers import account, notes, categories
 
 
 app = FastAPI(
@@ -14,6 +13,7 @@ app = FastAPI(
 
 app.include_router(account.router)
 app.include_router(notes.router)
+app.include_router(categories.router)
 
 
 @app.get("/")

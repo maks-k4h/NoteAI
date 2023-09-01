@@ -27,11 +27,35 @@ router = APIRouter(
 def get_notes(db_session: Annotated[Session, Depends(get_db_session)],
               user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
               offset: Annotated[int, Query(ge=0)] = 0,
-              limit: Annotated[int | None, Query(ge=0)] = None):
+              limit: Annotated[int | None, Query(ge=0)] = None
+):
 
     notes = notes_crud.get_by_user_uuid(db_session, uuid.UUID(user_uuid), offset, limit)
 
     return notes
+
+
+@router.get(
+    '/details/{note_uuid}',
+    response_model=schema_note.IdentifiedNoteWithIdentifiedCategories
+)
+def get_note_details(
+        db_session: Annotated[Session, Depends(get_db_session)],
+        user_uuid: Annotated[models.User, Depends(security_user.get_current_user_uuid)],
+        note_uuid: str
+):
+    # retrieve uuid
+    try:
+        note_uuid = uuid.UUID(note_uuid)
+    except:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
+
+    note = notes_crud.get_by_uuid(db_session, note_uuid)
+
+    if not note or note.user_uuid.__str__() != user_uuid:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    return note
 
 
 @router.post(

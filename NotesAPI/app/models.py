@@ -14,7 +14,16 @@ users_to_categories_association_table = sa.Table(
     sa.Column('user_uuid', sa.UUID, primary_key=True),
     sa.Column('category_uuid', sa.UUID, primary_key=True),
     sa.ForeignKeyConstraint(['user_uuid'], ['users.uuid']),
-    sa.ForeignKeyConstraint(['category_uuid'], ['categories.uuid'])
+    sa.ForeignKeyConstraint(['category_uuid'], ['categories.uuid']),
+)
+
+notes_to_categories_association_table = sa.Table(
+    'notes_to_categories',
+    Base.metadata,
+    sa.Column('note_uuid', sa.UUID, primary_key=True),
+    sa.Column('category_uuid', sa.UUID, primary_key=True),
+    sa.ForeignKeyConstraint(['note_uuid'], ['notes.uuid']),
+    sa.ForeignKeyConstraint(['category_uuid'], ['categories.uuid']),
 )
 
 
@@ -39,7 +48,10 @@ class Category(Base):
     uuid = mapped_column(sa.Uuid, primary_key=True)
     name: Mapped[str] = mapped_column(sa.String(128), nullable=False, unique=True)
 
-    users: Mapped[list[User]] = relationship(secondary=users_to_categories_association_table, back_populates='categories')
+    users: Mapped[list[User]] = relationship(secondary=users_to_categories_association_table,
+                                             back_populates='categories')
+    notes: Mapped[list[Note]] = relationship(secondary=notes_to_categories_association_table,
+                                             back_populates='categories')
 
     def __repr__(self) -> str:
         return f'Category(uuid={self.uuid}, name={self.name})'
@@ -66,6 +78,8 @@ class Note(Base):
     content: Mapped[str] = mapped_column(sa.Text, nullable=False)
 
     user: Mapped[User] = relationship(back_populates='notes')
+    categories: Mapped[list[Category]] = relationship(secondary=notes_to_categories_association_table,
+                                                      back_populates='notes')
 
     def __repr__(self):
         return (f'Note(uuid={self.uuid.__str__()}, '

@@ -2,12 +2,16 @@ from fastapi import FastAPI
 from fastapi import Response, status
 from . import DEBUG
 
-# include routers
+# import routers
 from .routers import account, notes, categories
+
+# startup/shutdown events
+from .lifespan import lifespan
 
 
 app = FastAPI(
     debug=DEBUG,
+    lifespan=lifespan
 )
 
 

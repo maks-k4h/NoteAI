@@ -18,6 +18,20 @@ services:
       - pg-network
 
 
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    restart: always
+    hostname: redis
+    environment:
+      - REDIS_ARGS=--requirepass password
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    networks:
+      - redis
+
+
   notes-api:
     build: NotesAPI
     container_name: notes-api
@@ -25,10 +39,13 @@ services:
     depends_on:
       postgres:
         condition: service_started
+      redis:
+        condition: service_started
     ports:
       - "8012:8012"
     networks:
       - pg-network
+      - redis
 
 
   pgadmin:
@@ -46,10 +63,13 @@ services:
     networks:
       - pg-network
 
+
 volumes:
   postgres_data:
   pgadmin_data:
 
 networks:
   pg-network:
+    driver: bridge
+  redis:
     driver: bridge

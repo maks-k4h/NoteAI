@@ -11,6 +11,8 @@ from .. import models
 
 from ..schemas import note as schema_note
 
+from ..events import note as events_note
+
 import uuid
 
 
@@ -61,7 +63,7 @@ def get_note_details(
 @router.post(
     '/create',
 )
-def create_note(db_session: Annotated[Session, Depends(get_db_session)],
+async def create_note(db_session: Annotated[Session, Depends(get_db_session)],
                 user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
                 note: schema_note.NoteBase):
 
@@ -73,6 +75,9 @@ def create_note(db_session: Annotated[Session, Depends(get_db_session)],
 
     if not notes_crud.put_note(db_session, db_note):
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # log the event
+    events_note.log_content_change(db_note.uuid.__str__())
 
     return Response(status_code=status.HTTP_200_OK)
 

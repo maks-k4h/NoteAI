@@ -22,12 +22,16 @@ router = APIRouter(
 )
 
 
-@router.get('/')
+@router.get(
+    '/'
+)
 def get_account_info(user: Annotated[models.User, Depends(security_user.get_current_user)]):
     return user
 
 
-@router.post('/register')
+@router.post(
+    '/register'
+)
 def register_user(session: Annotated[Session, Depends(get_db_session)], user: user_models.UserRegister):
     if user_crud.check_email(session, user.email):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 'This email is already used.')
@@ -51,9 +55,13 @@ def register_user(session: Annotated[Session, Depends(get_db_session)], user: us
     return Response(status_code=status.HTTP_200_OK)
 
 
-@router.post('/token')
-def get_token(session: Annotated[Session, Depends(get_db_session)],
-              form_data: Annotated[oauth2.OAuth2PasswordRequestForm, Depends()]):
+@router.post(
+    '/token'
+)
+def get_token(
+        session: Annotated[Session, Depends(get_db_session)],
+        form_data: Annotated[oauth2.OAuth2PasswordRequestForm, Depends()]
+):
 
     user = security_user.authenticate_user(session, form_data.username, form_data.password)
     if not user:

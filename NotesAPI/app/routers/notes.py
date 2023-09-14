@@ -6,10 +6,10 @@ from fastapi import Response, status
 from ..security import user as security_user
 
 from ..db.database import get_db_session, Session
-from ..db.crud import note as notes_crud
+from ..db import crud
 from .. import models
 
-from ..schemas import note as schema_note
+from .. import schemas
 
 from ..events import note as events_note
 
@@ -24,7 +24,7 @@ router = APIRouter(
 
 @router.get(
     '/',
-    response_model=list[schema_note.IdentifiedNote]
+    response_model=list[schemas.note.IdentifiedNote]
 )
 def get_notes(db_session: Annotated[Session, Depends(get_db_session)],
               user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
@@ -32,18 +32,18 @@ def get_notes(db_session: Annotated[Session, Depends(get_db_session)],
               limit: Annotated[int | None, Query(ge=0)] = None
 ):
 
-    notes = notes_crud.get_by_user_uuid(db_session, uuid.UUID(user_uuid), offset, limit)
+    notes = crud.note.get_by_user_uuid(db_session, uuid.UUID(user_uuid), offset, limit)
 
     return notes
 
 
 @router.get(
-    '/details/{note_uuid}',
-    response_model=schema_note.IdentifiedNoteWithIdentifiedCategories
+    '/{note_uuid}',
+    response_model=schemas.note.NoteBase
 )
-def get_note_details(
+def get_note(
         db_session: Annotated[Session, Depends(get_db_session)],
-        user_uuid: Annotated[models.User, Depends(security_user.get_current_user_uuid)],
+        user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
         note_uuid: str
 ):
     # retrieve uuid
@@ -52,7 +52,7 @@ def get_note_details(
     except:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
 
-    note = notes_crud.get_by_uuid(db_session, note_uuid)
+    note = crud.note.get_by_uuid(db_session, note_uuid)
 
     if not note or note.user_uuid.__str__() != user_uuid:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -60,12 +60,132 @@ def get_note_details(
     return note
 
 
+@router.get(
+    '/{note_uuid}/details',
+    response_model=schemas.note.IdentifiedNoteWithIdentifiedCategories
+)
+def get_note_details(
+        db_session: Annotated[Session, Depends(get_db_session)],
+        user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+        note_uuid: str
+):
+    # retrieve uuid
+    try:
+        note_uuid = uuid.UUID(note_uuid)
+    except:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
+
+    note = crud.note.get_by_uuid(db_session, note_uuid)
+
+    if not note or note.user_uuid.__str__() != user_uuid:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    return note
+
+
+@router.get(
+    '/{note_uuid}/categories',
+    response_model=list[schemas.category.IdentifiedBaseCategory]
+)
+def get_note_categories(
+        db_session: Annotated[Session, Depends(get_db_session)],
+        user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+        note_uuid: str
+):
+    # retrieve uuid
+    try:
+        note_uuid = uuid.UUID(note_uuid)
+    except:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
+
+    note = crud.note.get_by_uuid(db_session, note_uuid)
+
+    if not note or note.user_uuid.__str__() != user_uuid:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    categories = note.categories
+
+    return categories
+
+
+@router.post(
+    '/{note_uuid}/categories/add'
+)
+def add_note_category(
+        db_session: Annotated[Session, Depends(get_db_session)],
+        user: Annotated[models.User, Depends(security_user.get_current_user)],
+        note_uuid: str,
+        category_uuid: str,
+):
+    # retrieve uuid
+    try:
+        note_uuid = uuid.UUID(note_uuid)
+        category_uuid = uuid.UUID(category_uuid)
+    except:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
+
+    note = crud.note.get_by_uuid(db_session, note_uuid)
+    category = crud.category.get_by_uuid(db_session, category_uuid)
+
+    if (not note
+            or note.user_uuid != user.uuid):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Note not found')
+
+    if (not category
+            or category not in user.categories):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Category not found')
+
+    if category in note.categories:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'The category is already assigned to this note')
+
+    note.categories.append(category)
+    db_session.commit()
+
+    return Response(status_code=status.HTTP_200_OK)
+
+
+@router.delete(
+    '/{note_uuid}/categories/delete'
+)
+def remove_note_category(
+        db_session: Annotated[Session, Depends(get_db_session)],
+        user: Annotated[models.User, Depends(security_user.get_current_user)],
+        note_uuid: str,
+        category_uuid: str,
+):
+    # retrieve uuid
+    try:
+        note_uuid = uuid.UUID(note_uuid)
+        category_uuid = uuid.UUID(category_uuid)
+    except:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
+
+    note = crud.note.get_by_uuid(db_session, note_uuid)
+    category = crud.category.get_by_uuid(db_session, category_uuid)
+
+    if (not note
+            or note.user_uuid != user.uuid):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Note not found')
+
+    if (not category
+            or category not in user.categories):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Category not found')
+
+    if category not in note.categories:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'The category is not assigned to this note')
+
+    note.categories.remove(category)
+    db_session.commit()
+
+    return Response(status_code=status.HTTP_200_OK)
+
+
 @router.post(
     '/create',
 )
 async def create_note(db_session: Annotated[Session, Depends(get_db_session)],
                 user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
-                note: schema_note.NoteBase):
+                note: schemas.note.NoteBase):
 
     db_note = models.Note()
     db_note.uuid = uuid.uuid4()
@@ -73,7 +193,7 @@ async def create_note(db_session: Annotated[Session, Depends(get_db_session)],
     db_note.title = note.title
     db_note.content = note.content
 
-    if not notes_crud.put_note(db_session, db_note):
+    if not crud.note.put_note(db_session, db_note):
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # log the event
@@ -94,20 +214,15 @@ def delete_note(db_session: Annotated[Session, Depends(get_db_session)],
     except:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
 
-    note = notes_crud.get_by_uuid(db_session, note_uuid)
+    note = crud.note.get_by_uuid(db_session, note_uuid)
 
     if not note or not note.user_uuid.__str__() == user_uuid:
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Note not found')
 
-    if not notes_crud.delete(db_session, note):
+    if not crud.note.delete(db_session, note):
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(status_code=status.HTTP_200_OK)
-
-
-
-
-
 
 
 

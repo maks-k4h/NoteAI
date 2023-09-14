@@ -22,4 +22,6 @@ app.include_router(categories.router)
 
 @app.get("/")
 def home():
-    return Response(status_code=status.HTTP_200_OK)
+    return {
+        'message': 'Hello, world!'
+    }

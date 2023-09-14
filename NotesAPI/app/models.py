@@ -31,12 +31,14 @@ class User(Base):
     __tablename__ = 'users'
 
     uuid = mapped_column(sa.Uuid, primary_key=True)
+    role_uuid = mapped_column(sa.ForeignKey('roles.uuid'), nullable=True)
     name: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     password: Mapped[str] = mapped_column(sa.String(64), nullable=False)
 
     user_meta: Mapped[UserMeta] = relationship(back_populates='user')
     categories: Mapped[list[Category]] = relationship(secondary=users_to_categories_association_table, back_populates='users')
     notes: Mapped[list[Note]] = relationship(back_populates='user')
+    role: Mapped[Role] = relationship(back_populates='users')
 
     def __repr__(self) -> str:
         return f'User(uuid={self.uuid}, email={self.email}, password={self.password})'
@@ -86,4 +88,15 @@ class Note(Base):
                 f'user_uuid={self.user_uuid.__str__()}, '
                 f'title="{self.title}, '
                 f'content={self.content[:30] + "..." if len(self.content) > 30 else self.content}")')
+
+
+class Role(Base):
+    __tablename__ = 'roles'
+
+    uuid = mapped_column(sa.Uuid, primary_key=True)
+    name: Mapped[str] = mapped_column(sa.String, nullable=False)
+    description: Mapped[str] = mapped_column(sa.String, nullable=True)
+
+    users: Mapped[list[User]] = relationship(back_populates='role')
+
 

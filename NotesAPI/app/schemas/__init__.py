@@ -1,1 +1,1 @@
-from . import category, note, user
+from . import category, note, user, role

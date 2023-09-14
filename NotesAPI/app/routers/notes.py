@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi import Response, status
 
-from ..security import user as security_user
+from .. import security
 
 from ..db.database import get_db_session, Session
 from ..db import crud
@@ -27,7 +27,7 @@ router = APIRouter(
     response_model=list[schemas.note.IdentifiedNote]
 )
 def get_notes(db_session: Annotated[Session, Depends(get_db_session)],
-              user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+              user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
               offset: Annotated[int, Query(ge=0)] = 0,
               limit: Annotated[int | None, Query(ge=0)] = None
 ):
@@ -43,7 +43,7 @@ def get_notes(db_session: Annotated[Session, Depends(get_db_session)],
 )
 def get_note(
         db_session: Annotated[Session, Depends(get_db_session)],
-        user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+        user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
         note_uuid: str
 ):
     # retrieve uuid
@@ -66,7 +66,7 @@ def get_note(
 )
 def get_note_details(
         db_session: Annotated[Session, Depends(get_db_session)],
-        user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+        user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
         note_uuid: str
 ):
     # retrieve uuid
@@ -89,7 +89,7 @@ def get_note_details(
 )
 def get_note_categories(
         db_session: Annotated[Session, Depends(get_db_session)],
-        user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+        user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
         note_uuid: str
 ):
     # retrieve uuid
@@ -113,7 +113,7 @@ def get_note_categories(
 )
 def add_note_category(
         db_session: Annotated[Session, Depends(get_db_session)],
-        user: Annotated[models.User, Depends(security_user.get_current_user)],
+        user: Annotated[models.User, Depends(security.user.get_current_user)],
         note_uuid: str,
         category_uuid: str,
 ):
@@ -149,7 +149,7 @@ def add_note_category(
 )
 def remove_note_category(
         db_session: Annotated[Session, Depends(get_db_session)],
-        user: Annotated[models.User, Depends(security_user.get_current_user)],
+        user: Annotated[models.User, Depends(security.user.get_current_user)],
         note_uuid: str,
         category_uuid: str,
 ):
@@ -184,7 +184,7 @@ def remove_note_category(
     '/create',
 )
 async def create_note(db_session: Annotated[Session, Depends(get_db_session)],
-                user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+                user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
                 note: schemas.note.NoteBase):
 
     db_note = models.Note()
@@ -206,7 +206,7 @@ async def create_note(db_session: Annotated[Session, Depends(get_db_session)],
     '/delete'
 )
 def delete_note(db_session: Annotated[Session, Depends(get_db_session)],
-                user_uuid: Annotated[str, Depends(security_user.get_current_user_uuid)],
+                user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
                 note_uuid: str):
 
     try:

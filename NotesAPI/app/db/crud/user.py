@@ -1,7 +1,6 @@
 
 import sqlalchemy as sa
 from sqlalchemy import orm
-from ..database import sessionmaker
 from ... import models
 
 from uuid import UUID

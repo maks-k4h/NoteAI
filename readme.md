@@ -1,6 +1,21 @@
 # NoteAI
 
+## Architecture
+
+![NoteAI-Architecture](https://github.com/maks-k4h/NoteAI/assets/54114277/6f57aa82-2da2-43dd-90dc-e1f65dcb61cd)
+
+Main components:
+- API — FastAPI server;
+- API Database — central storage;
+- Notes Processing Daemon (NPD, NPDaemon) — performs note categorization and indexing;
+- NPD Database — NPDaemon's state storage;
+- Redis storage — provides event streaming infrastructure;
+- Front End — sad inevitability...
+
+
 ## Environment setup
+
+Danger! If you see this sentence then the service's architecture is still being designed, so those instructions are almost certainly incomplete and invalid.
 
 ### Security
 

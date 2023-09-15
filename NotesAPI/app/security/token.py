@@ -3,6 +3,7 @@ import os
 from datetime import timedelta, datetime
 
 from pydantic import BaseModel
+from fastapi import HTTPException, status
 
 from jose import JWTError, jwt
 
@@ -32,5 +33,9 @@ def create_token(data: dict, expires_delta: timedelta | None = None) -> Token:
 
 
 def decode_token(token: str) -> TokenData:
-    payload = jwt.decode(token, SIGNATURE, JWT_ALGORITHM)
+    try:
+        payload = jwt.decode(token, SIGNATURE, JWT_ALGORITHM)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     return TokenData(uuid=payload['uuid'])

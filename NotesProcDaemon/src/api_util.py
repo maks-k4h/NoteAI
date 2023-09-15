@@ -2,7 +2,9 @@ import os
 from typing import Any
 
 import requests
-from requests import codes
+from requests import codes, request
+
+from . import schemas
 
 API_URL = os.environ['API_URL']
 API_LOGIN = os.environ['API_LOGIN']
@@ -43,7 +45,6 @@ def _request(
         params: Any = None,
         *args,
         data: Any = None,
-        headers: Any = None,
         reauthenticate: bool = True
 ):
     """
@@ -52,23 +53,14 @@ def _request(
     method = method.lower()
     url = f'{API_URL}{path}'
 
-    if method == 'get':
-        response = requests.get(url, params=params, data=data, headers=headers)
-    elif method == 'post':
-        response = requests.post(url, params=params, data=data, headers=headers)
-    elif method == 'put':
-        response = requests.put(url, params=params, data=data, headers=headers)
-    elif method == 'delete':
-        response = requests.delete(url, params=params, data=data, headers=headers)
-    else:
-        raise Exception('Unknown method.')
+    response = request(method, url, params=params, data=data, headers=_headers())
 
     if response.status_code == codes.unauthorized:
         if reauthenticate:
             _authorize()
-            _request(method, url, params=params, data=data, headers=headers, reauthenticate=False)
+            return _request(method, path, params=params, data=data, reauthenticate=False)
         else:
-            raise Exception('Unauthorized', response.json())
+            raise Exception('Unauthorized')
 
     return response
 
@@ -76,8 +68,14 @@ def _request(
 def get_note_by_uuid(uuid: str):
     response = _request(
         'get',
-        f'/notes/{uuid}',
-        headers=_headers()
+        f'/notes/{uuid}'
     )
-    return response.json()
+    if response.status_code != codes.ok:
+        raise Exception('Cannot retrieve note by uuid.', response)
+    data = response.json()
+    return schemas.Note(
+        uuid=uuid,
+        title=data['title'],
+        content=data['content'],
+    )
 

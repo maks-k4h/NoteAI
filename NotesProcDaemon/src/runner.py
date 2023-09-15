@@ -18,6 +18,7 @@ class Runner:
         try:
             while self._running:
                 message = self._read_message()
+                print('Processing message:', message)
                 self._dispense(message)
                 self._set_last_message_id(message.id)
         finally:

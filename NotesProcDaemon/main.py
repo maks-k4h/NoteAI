@@ -1,5 +1,4 @@
-from . import runner
-from . import services
+from src import runner, services
 
 runner = runner.Runner()
 

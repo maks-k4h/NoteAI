@@ -33,5 +33,4 @@ def create_token(data: dict, expires_delta: timedelta | None = None) -> Token:
 
 def decode_token(token: str) -> TokenData:
     payload = jwt.decode(token, SIGNATURE, JWT_ALGORITHM)
-    print(payload)
     return TokenData(uuid=payload['uuid'])

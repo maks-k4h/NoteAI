@@ -54,7 +54,8 @@ def get_note(
 
     note = crud.note.get_by_uuid(db_session, note_uuid)
 
-    if not note or note.user_uuid.__str__() != user_uuid:
+    if not note or (note.user_uuid.__str__() != user_uuid
+                    and not security.roles.authorize_uuid(user_uuid, security.roles.NPDAEMON)):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     return note

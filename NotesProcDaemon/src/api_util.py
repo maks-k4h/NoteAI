@@ -65,7 +65,7 @@ def _request(
     return response
 
 
-def get_note_by_uuid(uuid: str):
+def get_note_by_uuid(uuid: str) -> schemas.Note:
     response = _request(
         'get',
         f'/notes/{uuid}'
@@ -77,5 +77,19 @@ def get_note_by_uuid(uuid: str):
         uuid=uuid,
         title=data['title'],
         content=data['content'],
+    )
+
+
+def get_note_category_by_uuid(uuid: str) -> schemas.NoteCategory:
+    response = _request(
+        'get',
+        f'/categories/{uuid}'
+    )
+    if response.status_code != codes.ok:
+        raise Exception('Cannot retrieve note category by uuid.', response)
+    data = response.json()
+    return schemas.NoteCategory(
+        uuid=uuid,
+        name=data['name']
     )
 

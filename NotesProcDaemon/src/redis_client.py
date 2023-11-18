@@ -14,7 +14,7 @@ r = redis.Redis(
     decode_responses=True
 )
 
-if not r.exists('changes:notes'):
-    r.xadd('changes:notes', {'uuid': ''})
+if not r.exists('npd'):
+    r.xadd('npd', {'uuid': '', 'channel': ''})
 
 

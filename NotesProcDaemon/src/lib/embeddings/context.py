@@ -17,7 +17,7 @@ class EmbeddingContext:
         self._strategy = strategy
 
     def encode(self, text: str | list[str]) -> np.ndarray:
-        pass
+        return self._strategy.encode(text)
 
 
 

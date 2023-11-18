@@ -24,3 +24,5 @@ try:
 except:
     raise Exception('Provide REDIS_PASSWORD')
 
+from . import note, note_category
+

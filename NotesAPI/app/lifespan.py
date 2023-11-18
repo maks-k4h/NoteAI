@@ -8,8 +8,8 @@ from .events.redis import r
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # init redis
-    if not r.exists('changes:notes'):
-        r.xadd('changes:notes', {'uuid': ''})
+    if not r.exists('npd'):
+        r.xadd('npd', {'uuid': '', 'channel': ''})
 
     # ...
     yield

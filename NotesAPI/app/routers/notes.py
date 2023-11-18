@@ -128,12 +128,12 @@ def add_note_category(
     note = crud.note.get_by_uuid(db_session, note_uuid)
     category = crud.category.get_by_uuid(db_session, category_uuid)
 
-    if (not note
-            or note.user_uuid != user.uuid):
+    if (not note or (note.user_uuid != user.uuid and
+                     not security.roles.authorize_uuid(str(user.uuid), security.roles.NPDAEMON))):
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Note not found')
 
-    if (not category
-            or category not in user.categories):
+    if (not category or (category not in user.categories
+                         and not security.roles.authorize_uuid(str(user.uuid), security.roles.NPDAEMON))):
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Category not found')
 
     if category in note.categories:
@@ -198,7 +198,7 @@ async def create_note(db_session: Annotated[Session, Depends(get_db_session)],
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # log the event
-    events_note.log_content_change(db_note.uuid.__str__())
+    events_note.log_content_change(db_note.uuid.__str__(), user_uuid)
 
     return Response(status_code=status.HTTP_200_OK)
 

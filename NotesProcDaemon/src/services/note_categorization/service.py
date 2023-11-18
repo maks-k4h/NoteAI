@@ -27,6 +27,13 @@ class Service(BaseService):
 
         self._upsert_note_embedding(note.uuid, note_embedding)
 
+        note_category_uuid = self._get_category(note_embedding, message.data['user_uuid'])
+
+        api_util.add_note_category(note.uuid, note_category_uuid)
+
+        print(f'Categorized: {note.uuid} as {note_category_uuid}')
+
+        return None
 
 
     def _get_note_embedding(self, note: Note):
@@ -54,5 +61,11 @@ class Service(BaseService):
             else:
                 ne_obj.embedding_768 = embedding
             session.commit()
+
+    def _get_category(self, note_embedding, user_uuid) -> str:
+        with database.SessionLocal() as session:
+            nc_embs = crud.cat_embeddings.get_knn_categories(session, note_embedding, user_uuid, 1)
+            return nc_embs[0]
+
 
 

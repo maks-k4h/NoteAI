@@ -79,7 +79,7 @@ def create_category(
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Cannot create this category')
 
         # events
-        events.note_category.log_change(str(db_category.uuid))
+        events.note_category.log_change(str(db_category.uuid), str(user.uuid))
 
     db_category = categories_crud.get_by_name(db_session, category_name)
 

@@ -93,3 +93,12 @@ def get_note_category_by_uuid(uuid: str) -> schemas.NoteCategory:
         name=data['name']
     )
 
+
+def add_note_category(note_uuid: str, category_uuid: str):
+    response = _request(
+        'post',
+        f'/notes/{note_uuid}/categories/add?category_uuid={category_uuid}'
+    )
+    if response.status_code != codes.ok:
+        raise Exception('Cannot add the category.', response)
+

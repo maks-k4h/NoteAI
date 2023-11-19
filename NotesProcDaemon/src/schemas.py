@@ -15,7 +15,7 @@ class Note(BaseModel):
         return self.__repr__()
 
 
-class Category(BaseModel):
+class NoteCategory(BaseModel):
     uuid: str
     name: str
 

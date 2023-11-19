@@ -29,10 +29,37 @@ router = APIRouter(
 def get_notes(db_session: Annotated[Session, Depends(get_db_session)],
               user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
               offset: Annotated[int, Query(ge=0)] = 0,
-              limit: Annotated[int | None, Query(ge=0)] = None
+              limit: Annotated[int | None, Query(ge=0)] = None,
+              user_uuid_filter: str | None = None   # get notes of other user (used by other services)
 ):
+    if user_uuid_filter and not security.roles.authorize_uuid(user_uuid, security.roles.NPDAEMON):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Unauthorized to use user_uuid_filter')
 
-    notes = crud.note.get_by_user_uuid(db_session, uuid.UUID(user_uuid), offset, limit)
+    if not user_uuid_filter:
+        notes = crud.note.get_by_user_uuid(db_session, uuid.UUID(user_uuid), offset, limit)
+    else:
+        notes = crud.note.get_by_user_uuid(db_session, uuid.UUID(user_uuid_filter), offset, limit)
+
+    return notes
+
+
+@router.get(
+    '/detailed',
+    response_model=list[schemas.note.IdentifiedNoteWithIdentifiedCategories]
+)
+def get_notes_detailed(db_session: Annotated[Session, Depends(get_db_session)],
+              user_uuid: Annotated[str, Depends(security.user.get_current_user_uuid)],
+              offset: Annotated[int, Query(ge=0)] = 0,
+              limit: Annotated[int | None, Query(ge=0)] = None,
+              user_uuid_filter: str | None = None   # get notes of other user (used by other services)
+):
+    if user_uuid_filter and not security.roles.authorize_uuid(user_uuid, security.roles.NPDAEMON):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Unauthorized to use user_uuid_filter')
+
+    if not user_uuid_filter:
+        notes = crud.note.get_by_user_uuid(db_session, uuid.UUID(user_uuid), offset, limit)
+    else:
+        notes = crud.note.get_by_user_uuid(db_session, uuid.UUID(user_uuid_filter), offset, limit)
 
     return notes
 
@@ -54,7 +81,8 @@ def get_note(
 
     note = crud.note.get_by_uuid(db_session, note_uuid)
 
-    if not note or note.user_uuid.__str__() != user_uuid:
+    if not note or (note.user_uuid.__str__() != user_uuid
+                    and not security.roles.authorize_uuid(user_uuid, security.roles.NPDAEMON)):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     return note
@@ -127,16 +155,16 @@ def add_note_category(
     note = crud.note.get_by_uuid(db_session, note_uuid)
     category = crud.category.get_by_uuid(db_session, category_uuid)
 
-    if (not note
-            or note.user_uuid != user.uuid):
+    if (not note or (note.user_uuid != user.uuid and
+                     not security.roles.authorize_uuid(str(user.uuid), security.roles.NPDAEMON))):
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Note not found')
 
-    if (not category
-            or category not in user.categories):
+    if (not category or (category not in user.categories
+                         and not security.roles.authorize_uuid(str(user.uuid), security.roles.NPDAEMON))):
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Category not found')
 
     if category in note.categories:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'The category is already assigned to this note')
+        return Response(status_code=status.HTTP_200_OK, content='The category is already associated with the note')
 
     note.categories.append(category)
     db_session.commit()
@@ -180,6 +208,34 @@ def remove_note_category(
     return Response(status_code=status.HTTP_200_OK)
 
 
+@router.delete(
+    '/{note_uuid}/categories/delete/all'
+)
+def remove_note_category(
+        db_session: Annotated[Session, Depends(get_db_session)],
+        user: Annotated[models.User, Depends(security.user.get_current_user)],
+        note_uuid: str,
+):
+    # retrieve uuid
+    try:
+        note_uuid = uuid.UUID(note_uuid)
+    except:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid UUID')
+
+    note = crud.note.get_by_uuid(db_session, note_uuid)
+
+    if (not note or (note.user_uuid != user.uuid and
+                     not security.roles.authorize_uuid(str(user.uuid), security.roles.NPDAEMON))):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Note not found')
+
+    categories = list(note.categories)
+    for category in categories:
+        note.categories.remove(category)
+    db_session.commit()
+
+    return Response(status_code=status.HTTP_200_OK)
+
+
 @router.post(
     '/create',
 )
@@ -197,7 +253,7 @@ async def create_note(db_session: Annotated[Session, Depends(get_db_session)],
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # log the event
-    events_note.log_content_change(db_note.uuid.__str__())
+    events_note.log_content_change(db_note.uuid.__str__(), user_uuid)
 
     return Response(status_code=status.HTTP_200_OK)
 

@@ -1,9 +1,9 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import Session
-from .. import models
+from ... import models
 
-from . import database
+from .. import database
 
 
 def init_message_tracker(session: Session, commit=True):
@@ -28,4 +28,6 @@ def set_last_message_id(session: Session, id: str, commit=True):
     session.execute(sa.update(models.LastProcessedMessage).values(message_id=id))
     if commit:
         session.commit()
+
+
 

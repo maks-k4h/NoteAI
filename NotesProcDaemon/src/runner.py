@@ -20,6 +20,7 @@ class Runner:
                 message = self._read_message()
                 print('Processing message:', message)
                 self._dispense(message)
+                print('Processed message:', message.id)
                 self._set_last_message_id(message.id)
         finally:
             self._running = False
@@ -27,15 +28,15 @@ class Runner:
 
     def _read_message(self) -> Message:
         messages = r.xread({
-            'changes:notes': self._get_last_message_id()
+            'npd': self._get_last_message_id()
         }, count=1, block=0)[0][1]
         assert len(messages) == 1
         message = messages[0]
-        return Message(message[0], message[1])
+        return Message(message[0], message[1]['channel'], message[1])
 
     def _dispense(self, message):
         for service in self._services:
-            service.process(message)
+            service.process(message, message.channel)
 
     def _on_start(self):
         with database.SessionLocal() as session:

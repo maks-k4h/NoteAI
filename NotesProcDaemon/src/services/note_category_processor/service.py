@@ -1,5 +1,6 @@
 from ..message import Message
 from ..service import BaseService
+from ... import redis_client
 from ... import api_util
 from ... import models
 from ...schemas import NoteCategory
@@ -16,6 +17,11 @@ class Service(BaseService):
             return
 
         if not message.data['uuid']:
+            print('note_category_processor: uuid absent')
+            return
+
+        if not message.data['user_uuid']:
+            print('note_category_processor: user_uuid absent')
             return
 
         try:
@@ -24,9 +30,14 @@ class Service(BaseService):
             print(e)
             return
 
+        # get embedding
         note_category_embedding = self._get_category_embedding(category)
 
+        # put embedding into db
         self._upsert_note_category_embedding(category.uuid, note_category_embedding)
+
+        # categorize all notes of the user again
+        self._recategorize_user_notes(message.data['user_uuid'])
 
     def _get_category_embedding(self, category: NoteCategory):
         ctx = embeddings.context.EmbeddingContext()
@@ -53,4 +64,17 @@ class Service(BaseService):
             else:
                 nce_obj.embedding_768 = embedding
             session.commit()
+
+    def _recategorize_user_notes(self, user_uuid: str):
+        note_uuids = api_util.get_note_uuids_by_user(user_uuid)
+        for note_uuid in note_uuids:
+            redis_client.r.xadd(
+                name='npd',
+                fields={
+                    'channel': 'note',
+                    'user_uuid': user_uuid,
+                    'uuid': note_uuid
+                }
+            )
+
 

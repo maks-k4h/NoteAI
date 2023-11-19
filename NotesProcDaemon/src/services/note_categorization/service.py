@@ -23,12 +23,17 @@ class Service(BaseService):
             print(e)
             return
 
+        # get note embedding
         note_embedding = self._get_note_embedding(note)
 
+        # store the embedding
         self._upsert_note_embedding(note.uuid, note_embedding)
 
+        # retrieve best-matching category's uuid
         note_category_uuid = self._get_category(note_embedding, message.data['user_uuid'])
 
+        # assign the best-matching category
+        api_util.drop_note_categories(note.uuid)
         api_util.add_note_category(note.uuid, note_category_uuid)
 
         print(f'Categorized: {note.uuid} as {note_category_uuid}')

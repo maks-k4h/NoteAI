@@ -80,6 +80,17 @@ def get_note_by_uuid(uuid: str) -> schemas.Note:
     )
 
 
+def get_note_uuids_by_user(user_uuid: str) -> list[str]:
+    response = _request(
+        'get',
+        f'/notes/?user_uuid_filter={user_uuid}'
+    )
+    if response.status_code != codes.ok:
+        raise Exception('Cannot retrieve notes by user_uuid.', response)
+    data = response.json()
+    return [n['uuid'] for n in data]
+
+
 def get_note_category_by_uuid(uuid: str) -> schemas.NoteCategory:
     response = _request(
         'get',
@@ -101,4 +112,13 @@ def add_note_category(note_uuid: str, category_uuid: str):
     )
     if response.status_code != codes.ok:
         raise Exception('Cannot add the category.', response)
+
+
+def drop_note_categories(note_uuid: str):
+    response = _request(
+        'delete',
+        f'/notes/{note_uuid}/categories/delete/all'
+    )
+    if response.status_code != codes.ok:
+        raise Exception('Cannot drop note\'s categories.', response)
 

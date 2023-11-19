@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import datetime
+
 from .db.database import Base
 
 import sqlalchemy as sa
@@ -39,6 +41,7 @@ class User(Base):
     categories: Mapped[list[Category]] = relationship(secondary=users_to_categories_association_table, back_populates='users')
     notes: Mapped[list[Note]] = relationship(back_populates='user')
     role: Mapped[Role] = relationship(back_populates='users')
+    images: Mapped[list[Image]] = relationship(back_populates='user')
 
     def __repr__(self) -> str:
         return f'User(uuid={self.uuid}, email={self.email}, password={self.password})'
@@ -98,5 +101,19 @@ class Role(Base):
     description: Mapped[str] = mapped_column(sa.String, nullable=True)
 
     users: Mapped[list[User]] = relationship(back_populates='role')
+
+
+class Image(Base):
+    __tablename__ = 'images'
+
+    uuid = mapped_column(sa.Uuid, primary_key=True)
+    user_uuid = mapped_column(sa.ForeignKey('users.uuid'), nullable=False)
+    added: Mapped[datetime.datetime] = mapped_column(sa.DateTime, nullable=False)
+    deleted: Mapped[datetime.datetime] = mapped_column(sa.DateTime, nullable=True)
+    location: Mapped[str] = mapped_column(sa.String, nullable=True)
+    path: Mapped[str] = mapped_column(sa.String, nullable=False)
+    size: Mapped[int] = mapped_column(sa.Integer, nullable=True)
+
+    user: Mapped[User] = relationship(back_populates='images')
 
 
